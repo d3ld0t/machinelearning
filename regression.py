@@ -7,6 +7,7 @@ import data
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import fmin_bfgs,fmin
+from scipy import linalg as la
 
 class Regression(object):
     """
@@ -31,12 +32,28 @@ class LinearRegression(Regression):
     """
 
     def __init__(self,data):
+        # init baseclass
         super(LinearRegression,self).__init__(data)
-        self.xData = self.data[0]
+
+        # set up data
+        self.xData = self.data[0] # xData of size (numFeatures,numPoints)
         self.numFeatures = len(self.xData)
         self.numPoints = len(self.xData[0])
-        self.xData = np.vstack([np.ones(self.numPoints),self.xData])
         self.yData = self.data[1]
+
+        # Find means and ranges of data for mean Normalization
+        # and feature scaling
+        self.means = np.mean(self.xData,1).reshape(self.numFeatures,1)
+        self.ranges = np.ptp(self.xData,1).reshape(self.numFeatures,1)
+
+        # normalize
+        self.xData -= self.means
+        self.xData /= self.ranges
+
+        # add bias feature
+        self.xData = np.vstack([np.ones(self.numPoints),self.xData])
+
+        # Set up initial theta
         self.theta = np.random.rand(1 + self.numFeatures)
 
     def plot(self,featureNum,**kwargs):
@@ -71,22 +88,50 @@ class LinearRegression(Regression):
 
         return self.gradJ
 
+    def getTheta(self):
+        """Return current value of theta"""
+        return self.theta
+
+    def getError(self):
+        """
+        Return current value of error:
+
+        e = y - Theta.T*X
+    
+        """
+        return self.yData - np.dot(self.xData.T,self.theta)
+
+
+    def getExactTheta(self):
+        """Return optimal theta val as found from eq. 1/(X'X)*(X'y)"""
+
+        return np.dot(la.pinv(np.dot(self.xData,self.xData.T)),
+                      np.dot(self.xData,self.yData))
+
+
+    def getData(self,state='raw'):
+        if state == 'raw':
+            return (self.xData[1:] * self.ranges + self.means,self.yData)
+        elif state == 'normalized':
+            return (self.xData[1:],self.yData)
+        
     def minimize(self):
-        self.theta = fmin(self.getCost,self.theta,xtol=1.e-8)#,fprime=linReg.costGradient)
+        self.theta = fmin_bfgs(self.getCost,self.theta,fprime = self.getCostGradient)
         self.getCost(self.theta)
 
 
 
-data = data.genLinearData(100,
-                          slopes= [-12.],
+data = data.genLinearData(10,
+                          slopes= [-12.,4.2],
                           intercept = 4.,
-                          domains = [(-3.,4.)],
-                          fudge = 80.,
-                          distribution = 'normal')
-def cost(x):
-    return sum(x**2)
+                          domains = [(14.,20.),(-11.,-9.)],
+                          fudge = 8.,
+                          distribution = 'uniform')
+
+print data[0]
 linReg = LinearRegression(data)
-print linReg.theta
+print linReg.getData('raw')
+print linReg.getData('normalized')
 linReg.minimize()
-print linReg.theta
-linReg.plot(1)
+print linReg.getTheta()
+print linReg.getExactTheta()
