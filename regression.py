@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Linear regression tools
+Regression tools
 """
 
 import data
@@ -58,7 +58,8 @@ class LinearRegression(Regression):
 
     def plot(self,featureNum,**kwargs):
         plt.scatter(self.xData[featureNum],self.yData,**kwargs)
-        plt.scatter(self.xData[featureNum],np.dot(self.xData.T,self.theta),marker='x')
+        x = np.arange(-.5,.5,.01)
+        plt.plot(x,x*self.theta[1] + self.theta[0])
         plt.show()
 
     def getCost(self,theta):
@@ -114,24 +115,72 @@ class LinearRegression(Regression):
             return (self.xData[1:] * self.ranges + self.means,self.yData)
         elif state == 'normalized':
             return (self.xData[1:],self.yData)
+
+    def getNewVal(self,x):
+        """
+        If linear regression, x is list of len numFeatures.
+        """
+
+        x -= self.means
+        x /= self.ranges
+
+        return self.theta[0] + self.theta[1:]*x
         
     def minimize(self):
         self.theta = fmin_bfgs(self.getCost,self.theta,fprime = self.getCostGradient)
         self.getCost(self.theta)
 
+class PolynomialRegression(LinearRegression):
+
+    def __init__(self,data,n,**kwargs):
+        # init baseclass
+        # n is order of polynomial
+        self.polyOrder = n
+        
+        # can only have 1 x array (for now)
+        if len(data) != 2: raise Exception('Too much data for polynomial regression!')
+
+        xData,yData = data
+        for i in xrange(2,n+1):
+            xData = np.vstack([xData,data[0]**i])
+
+        super(PolynomialRegression,self).__init__((xData,yData))
+
+        plt.scatter(self.xData[1]*self.ranges[0] + self.means[0],self.yData,**kwargs)
+
+    def __getNewVal(self,x):
+        """
+        x is a single value
+        """
+
+        x = np.array([x**(i+1) for i in xrange(self.polyOrder)]).reshape(self.polyOrder,1)
+        x -= self.means
+        x /= self.ranges
+
+        return self.theta[0] + np.dot(self.theta[1:],x)
+
+    def getNewData(self,xData):
+        g = np.vectorize(self.__getNewVal)
+        yData = g(xData)
+        plt.plot(xData,yData,lw=6)
+
+        return yData
+    
+
+polyOrder = 2
+
+data = data.genData(10,
+                    slopes= np.random.rand(polyOrder),
+                    intercept = -1,
+                    domains = [(-.4,.4)],
+                    fudge = 2.,
+                    distribution = 'normal',
+                    polyOrder = polyOrder)
 
 
-data = data.genLinearData(10,
-                          slopes= [-12.,4.2],
-                          intercept = 4.,
-                          domains = [(14.,20.),(-11.,-9.)],
-                          fudge = 8.,
-                          distribution = 'uniform')
+polyReg = PolynomialRegression(data,2)
+polyReg.minimize()
+newData = polyReg.getNewData(np.arange(-.4,.4,.001))
+plt.show()
+#print polyReg.getData('raw')
 
-print data[0]
-linReg = LinearRegression(data)
-print linReg.getData('raw')
-print linReg.getData('normalized')
-linReg.minimize()
-print linReg.getTheta()
-print linReg.getExactTheta()
