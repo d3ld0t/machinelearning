@@ -2,11 +2,12 @@
 Regression tools
 """
 
-import data
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.optimize import fmin_bfgs,fmin
+from scipy.optimize import fmin_bfgs
 from scipy import linalg as la
+
+from . import data
 
 class Regression(object):
     """
