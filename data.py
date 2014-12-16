@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 Methods to provide data for machine learning algorithms.
 """
