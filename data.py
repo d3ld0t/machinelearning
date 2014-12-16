@@ -50,9 +50,8 @@ def genData(numPoints,slopes,domains,intercept,fudge,
     elif distribution == 'uniform':
         kwargs = {'distribution':distribution}
 
-    N = (polyOrder
-         if polyOrder > 1 
-         else min([len(slopes),len(domains)]))
+     if polyOrder > 1: N = polyOrder
+     else: N = min([len(slopes),len(domains)]))
 
     xData = np.zeros((N,numPoints),dtype = float)
     yData = np.zeros(numPoints,dtype = float)
