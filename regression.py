@@ -1,13 +1,13 @@
-#!/usr/bin/env python
 """
 Regression tools
 """
 
-import data
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.optimize import fmin_bfgs,fmin
+from scipy.optimize import fmin_bfgs
 from scipy import linalg as la
+
+from . import data
 
 class Regression(object):
     """
@@ -166,21 +166,22 @@ class PolynomialRegression(LinearRegression):
 
         return yData
     
+if __name__ == '__main__':
 
-polyOrder = 2
+    polyOrder = 2
 
-data = data.genData(10,
-                    slopes= np.random.rand(polyOrder),
-                    intercept = -1,
-                    domains = [(-.4,.4)],
-                    fudge = 2.,
-                    distribution = 'normal',
-                    polyOrder = polyOrder)
+    data = data.genData(10,
+                        slopes= np.random.rand(polyOrder),
+                        intercept = -1,
+                        domains = [(-.4,.4)],
+                        fudge = 2.,
+                        distribution = 'normal',
+                        polyOrder = polyOrder)
 
 
-polyReg = PolynomialRegression(data,2)
-polyReg.minimize()
-newData = polyReg.getNewData(np.arange(-.4,.4,.001))
-plt.show()
-#print polyReg.getData('raw')
+    polyReg = PolynomialRegression(data,2)
+    polyReg.minimize()
+    newData = polyReg.getNewData(np.arange(-.4,.4,.001))
+    plt.show()
+    #print polyReg.getData('raw')
 
